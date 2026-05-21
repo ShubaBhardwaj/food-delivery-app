@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   clearError: () => void;
   bypassAuth: (username: string, email: string) => Promise<void>;
+  updateProfile: (username: string, email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -145,6 +146,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = async (username: string, email: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const updatedUser = {
+        ...(user || { _id: "guest", role: "user" }),
+        username,
+        email,
+      };
+      
+      // Update session storage
+      await tokenStore.set({
+        accessToken: (await tokenStore.getAccessKey()) || "mock-access-token",
+        refreshToken: (await tokenStore.getRefreshKey()) || "mock-refresh-token",
+        user: updatedUser,
+      });
+
+      setUser(updatedUser);
+      setIsLoading(false);
+      return true;
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      setIsLoading(false);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -157,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         clearError,
         bypassAuth,
+        updateProfile,
       }}
     >
       {children}

@@ -23,7 +23,7 @@ export default function LogoutScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Top Header Row */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <Pressable
           onPress={handleCancel}
           style={({ pressed }) => [
@@ -33,7 +33,7 @@ export default function LogoutScreen() {
         >
           <X size={20} color="#000" />
         </Pressable>
-      </View>
+      </View> */}
 
       {/* Logout Dialogue Card */}
       <View style={styles.dialogCard}>
