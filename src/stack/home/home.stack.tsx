@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Bell, MapPin, Search, SlidersHorizontal } from "lucide-react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
+import * as SecureStore from "expo-secure-store";
 import { restaurants } from "../../data/restaurants";
 
 // Helper function to assign dynamic category icons
@@ -51,7 +52,25 @@ const dynamicCategories = Array.from(
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState("172 Grand St, New York, NY 10013");
+
+  useEffect(() => {
+    if (isFocused) {
+      const loadAddress = async () => {
+        try {
+          const storedAddress = await SecureStore.getItemAsync("profile_address");
+          if (storedAddress) {
+            setDeliveryAddress(storedAddress);
+          }
+        } catch (err) {
+          console.warn("Failed to load address on home screen:", err);
+        }
+      };
+      loadAddress();
+    }
+  }, [isFocused]);
 
   // Dynamic feed matching selected category
   const filteredFeedRestaurants = useMemo(() => {
@@ -88,7 +107,7 @@ export default function HomeScreen() {
             <Text style={styles.locationLabel}>Location</Text>
             <View style={styles.locationRow}>
               <MapPin size={16} color="red" fill="red" />
-              <Text style={styles.locationText}>Connaught Place, DL</Text>
+              <Text style={styles.locationText} numberOfLines={1}>{deliveryAddress}</Text>
             </View>
           </View>
 

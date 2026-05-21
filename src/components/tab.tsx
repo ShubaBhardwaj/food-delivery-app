@@ -37,6 +37,27 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     // Determine currently active route dynamically from navigation state
     const activeTab = state.routes[state.index].name;
 
+    // Retrieve active nested screen within stack navigators to hide tabs if needed
+    const currentRoute = state.routes[state.index];
+    let activeNestedScreen = '';
+    if (currentRoute.state) {
+        let nestedState = currentRoute.state;
+        while (nestedState.routes && nestedState.index !== undefined) {
+            const nestedRoute = nestedState.routes[nestedState.index];
+            activeNestedScreen = nestedRoute.name;
+            if (nestedRoute.state) {
+                nestedState = nestedRoute.state;
+            } else {
+                break;
+            }
+        }
+    }
+
+    const shouldHideTabBar = activeNestedScreen === 'Cart' || activeNestedScreen === 'RestaurantScreen';
+    if (shouldHideTabBar) {
+        return null;
+    }
+
     const handleTabPress = (tabName: string, routeKey: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 

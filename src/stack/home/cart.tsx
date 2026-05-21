@@ -3,12 +3,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   Image,
+  Pressable,
+  Alert,
 } from "react-native";
 
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   ArrowLeft,
@@ -17,8 +18,9 @@ import {
   Clock3,
   MapPin,
 } from "lucide-react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { useCart } from "../../context/CartContext";
+import * as SecureStore from "expo-secure-store";
 
 const getFoodImage = (name: string) => {
   const lowercaseName = name.toLowerCase();
@@ -54,7 +56,27 @@ const getFoodImage = (name: string) => {
 
 export default function CartScreen() {
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
   const { cartItems, updateQuantity, placeOrder, getCartSubtotal } = useCart();
+
+  const [deliveryAddress, setDeliveryAddress] = React.useState("172 Grand St, New York, NY 10013");
+
+  React.useEffect(() => {
+    if (isFocused) {
+      const loadAddress = async () => {
+        try {
+          const storedAddress = await SecureStore.getItemAsync("profile_address");
+          if (storedAddress) {
+            setDeliveryAddress(storedAddress);
+          }
+        } catch (err) {
+          console.warn("Failed to load delivery address from secure store:", err);
+        }
+      };
+      loadAddress();
+    }
+  }, [isFocused]);
 
   const subtotal = getCartSubtotal();
   const hasDollar = cartItems.some((i) => i.item.price.includes("$"));
@@ -66,12 +88,15 @@ export default function CartScreen() {
 
   if (cartItems.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed && styles.buttonPressed]}
+            onPress={() => navigation.goBack()}
+          >
             <ArrowLeft size={24} color="#000" />
-          </TouchableOpacity>
+          </Pressable>
 
           <Text style={styles.headerTitle}>
             My Cart
@@ -86,24 +111,27 @@ export default function CartScreen() {
           <Text style={styles.emptySubtext}>
             Browse our catalog and add delicious items from your favorite restaurants!
           </Text>
-          <TouchableOpacity 
-            style={styles.browseButton}
+          <Pressable 
+            style={({ pressed }) => [styles.browseButton, pressed && styles.buttonPressed]}
             onPress={() => navigation.navigate("Home")}
           >
             <Text style={styles.browseButtonText}>Explore Restaurants</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Pressable
+          style={({ pressed }) => [styles.backButton, pressed && styles.buttonPressed]}
+          onPress={() => navigation.goBack()}
+        >
           <ArrowLeft size={24} color="#000" />
-        </TouchableOpacity>
+        </Pressable>
 
         <Text style={styles.headerTitle}>
           My Cart
@@ -115,7 +143,7 @@ export default function CartScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 240,
+          paddingBottom: 320, // Expanded padding so promo message scrolls clearly above the checkout card
         }}
       >
         {/* DELIVERY INFO */}
@@ -132,8 +160,8 @@ export default function CartScreen() {
                 Deliver to
               </Text>
 
-              <Text style={styles.deliveryText}>
-                172 Grand St, NY
+              <Text style={styles.deliveryText} numberOfLines={2}>
+                {deliveryAddress}
               </Text>
             </View>
           </View>
@@ -190,26 +218,27 @@ export default function CartScreen() {
 
                 {/* QUANTITY */}
                 <View style={styles.quantityContainer}>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
+                  <Pressable
+                    style={({ pressed }) => [styles.quantityButton, pressed && styles.buttonPressed]}
                     onPress={() => updateQuantity(restaurant.id, item.name, -1)}
                   >
                     <Minus size={18} color="#000" />
-                  </TouchableOpacity>
+                  </Pressable>
 
                   <Text style={styles.quantityText}>
                     {quantity}
                   </Text>
 
-                  <TouchableOpacity
-                    style={[
+                  <Pressable
+                    style={({ pressed }) => [
                       styles.quantityButton,
                       styles.plusButton,
+                      pressed && styles.buttonPressed,
                     ]}
                     onPress={() => updateQuantity(restaurant.id, item.name, 1)}
                   >
                     <Plus size={18} color="#fff" />
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             );
@@ -229,16 +258,16 @@ export default function CartScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.claimButton}>
+          <Pressable style={({ pressed }) => [styles.claimButton, pressed && styles.buttonPressed]}>
             <Text style={styles.claimButtonText}>
               Applied
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </ScrollView>
 
       {/* BOTTOM CHECKOUT */}
-      <View style={styles.checkoutContainer}>
+      <View style={[styles.checkoutContainer, { paddingBottom: 24 + insets.bottom }]}>
         <View style={styles.priceRow}>
           <Text style={styles.priceLabel}>
             Subtotal
@@ -281,17 +310,32 @@ export default function CartScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity 
-          style={styles.checkoutButton}
+        <Pressable 
+          style={({ pressed }) => [
+            styles.checkoutButton,
+            pressed && styles.buttonPressed
+          ]}
           onPress={() => {
             placeOrder();
-            navigation.navigate("order");
+            Alert.alert(
+              "Your order is preparing! 🍳",
+              "Our chefs are crafting your meal to perfection.",
+              [
+                {
+                  text: "Track Order",
+                  onPress: () => {
+                    navigation.navigate("order");
+                  }
+                }
+              ],
+              { cancelable: false }
+            );
           }}
         >
           <Text style={styles.checkoutButtonText}>
             Proceed to Checkout
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -616,5 +660,9 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
 });

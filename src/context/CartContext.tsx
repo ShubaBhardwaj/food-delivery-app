@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { Restaurant, MenuItem } from "../data/restaurants";
+import * as SecureStore from "expo-secure-store";
 
 export interface CartItem {
   restaurant: Restaurant;
@@ -42,6 +43,54 @@ export const parsePriceString = (priceStr: string): number => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
+  const isLoadedRef = useRef(false);
+
+  // Restore cart items and orders from SecureStore on startup
+  useEffect(() => {
+    const loadStoredCart = async () => {
+      try {
+        const storedCart = await SecureStore.getItemAsync("cart_items");
+        const storedOrders = await SecureStore.getItemAsync("placed_orders");
+        if (storedCart) {
+          setCartItems(JSON.parse(storedCart));
+        }
+        if (storedOrders) {
+          setOrders(JSON.parse(storedOrders));
+        }
+      } catch (err) {
+        console.warn("Failed to load cart and orders from secure store:", err);
+      } finally {
+        isLoadedRef.current = true;
+      }
+    };
+    loadStoredCart();
+  }, []);
+
+  // Save cart items whenever they update
+  useEffect(() => {
+    if (!isLoadedRef.current) return;
+    const saveCart = async () => {
+      try {
+        await SecureStore.setItemAsync("cart_items", JSON.stringify(cartItems));
+      } catch (err) {
+        console.warn("Failed to save cart items:", err);
+      }
+    };
+    saveCart();
+  }, [cartItems]);
+
+  // Save orders whenever they update
+  useEffect(() => {
+    if (!isLoadedRef.current) return;
+    const saveOrders = async () => {
+      try {
+        await SecureStore.setItemAsync("placed_orders", JSON.stringify(orders));
+      } catch (err) {
+        console.warn("Failed to save orders:", err);
+      }
+    };
+    saveOrders();
+  }, [orders]);
 
   const addToCart = (restaurant: Restaurant, item: MenuItem) => {
     setCartItems((prevItems) => {
