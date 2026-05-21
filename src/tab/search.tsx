@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -21,20 +21,26 @@ import {
 
 import { restaurants } from "../data/restaurants";
 
-const categories = [
-  "North Indian",
-  "Asian",
-  "Italian",
-  "Pizza",
-  "Continental",
-  "Fast Food",
-  "Desserts",
-];
+const dynamicCategories = Array.from(
+  new Set(restaurants.flatMap((r) => r.cuisine))
+);
 
-export default function SearchScreen() {
+export default function SearchScreen({ route }: any) {
   const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const inputRef = useRef<TextInput>(null);
+
+  // Sync with route params from Home search bar typing / focusing
+  useEffect(() => {
+    if (route?.params?.searchQuery !== undefined) {
+      setSearchQuery(route.params.searchQuery);
+    }
+    const focusTimer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(focusTimer);
+  }, [route?.params?.searchQuery]);
 
   // Filter restaurants by search query and category toggle
   const filteredRestaurants = useMemo(() => {
@@ -93,6 +99,7 @@ export default function SearchScreen() {
         <Search size={20} color="#777" />
 
         <TextInput
+          ref={inputRef}
           placeholder="Search food, cuisines, or restaurants..."
           placeholderTextColor="#999"
           style={styles.input}
@@ -116,7 +123,7 @@ export default function SearchScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryWrapper}
         >
-          {categories.map((item, index) => {
+          {dynamicCategories.map((item, index) => {
             const isActive = selectedCategory === item;
             return (
               <TouchableOpacity
@@ -162,7 +169,7 @@ export default function SearchScreen() {
               key={item.id}
               style={styles.restaurantCard}
               onPress={() => {
-                navigation.navigate('Home', {
+                navigation.navigate('home', {
                   screen: 'RestaurantScreen',
                   params: { restaurant: item }
                 });
@@ -241,9 +248,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f5f5f5",
-    borderRadius: 20,
+    borderRadius: 50,
     paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
   },
 
   input: {

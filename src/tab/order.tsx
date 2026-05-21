@@ -16,45 +16,53 @@ import {
   Clock3,
   CheckCircle2,
 } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useCart } from "../context/CartContext";
 
-const orders = [
-  {
-    id: 1,
-    restaurant: "McDonald's",
-    item: "2x Chicken Burger",
-    status: "On the way",
-    time: "25 min",
-    image:
-      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1000",
-  },
-
-  {
-    id: 2,
-    restaurant: "Pizza Hut",
-    item: "Pepperoni Pizza",
-    status: "Delivered",
-    time: "Yesterday",
-    image:
-      "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000",
-  },
-
-  {
-    id: 3,
-    restaurant: "Coffee Cafe",
-    item: "Cold Coffee",
-    status: "Preparing",
-    time: "15 min",
-    image:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1000",
-  },
-];
+// Placed orders list is loaded dynamically from CartContext
 
 export default function OrdersScreen() {
+  const navigation = useNavigation<any>();
+  const { orders } = useCart();
+
+  if (orders.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate("home")}>
+            <ArrowLeft size={22} color="#000" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>
+            Orders
+          </Text>
+
+          <View style={{ width: 45 }} />
+        </View>
+
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyEmoji}>📦</Text>
+          <Text style={styles.emptyText}>No orders placed yet</Text>
+          <Text style={styles.emptySubtext}>
+            Your active/past orders will show up here. Place an order from your cart to get started!
+          </Text>
+          <TouchableOpacity 
+            style={styles.browseButton}
+            onPress={() => navigation.navigate("home")}
+          >
+            <Text style={styles.browseButtonText}>Order Delicious Food</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate("home")}>
           <ArrowLeft size={22} color="#000" />
         </TouchableOpacity>
 
@@ -68,54 +76,68 @@ export default function OrdersScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 40,
+          paddingBottom: 120, // Leave padding for the bottom navigation bar
         }}
       >
-        {orders.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.orderCard}
-          >
-            <Image
-              source={{ uri: item.image }}
-              style={styles.foodImage}
-            />
+        {orders.map((item) => {
+          const isDelivered = item.status === "Delivered";
+          const currency = item.totalPrice < 150 ? "$" : "₹";
 
-            <View style={styles.orderInfo}>
-              <Text style={styles.restaurantName}>
-                {item.restaurant}
-              </Text>
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.orderCard}
+              activeOpacity={0.9}
+            >
+              <Image
+                source={{ uri: item.restaurantImage }}
+                style={styles.foodImage}
+              />
 
-              <Text style={styles.itemName}>
-                {item.item}
-              </Text>
-
-              <View style={styles.bottomRow}>
-                <View style={styles.statusRow}>
-                  {item.status === "Delivered" ? (
-                    <CheckCircle2
-                      size={16}
-                      color="#22c55e"
-                    />
-                  ) : (
-                    <Clock3
-                      size={16}
-                      color="#ff9500"
-                    />
-                  )}
-
-                  <Text style={styles.statusText}>
-                    {item.status}
+              <View style={styles.orderInfo}>
+                <View style={styles.orderHeaderRow}>
+                  <Text style={styles.restaurantName} numberOfLines={1}>
+                    {item.restaurantName}
                   </Text>
+                  <Text style={styles.orderIdText}>#{item.id}</Text>
                 </View>
 
-                <Text style={styles.timeText}>
-                  {item.time}
+                <Text style={styles.itemName} numberOfLines={2}>
+                  {item.itemsSummary}
                 </Text>
+
+                <View style={styles.bottomRow}>
+                  <View style={styles.statusRow}>
+                    {isDelivered ? (
+                      <CheckCircle2
+                        size={16}
+                        color="#22c55e"
+                      />
+                    ) : (
+                      <Clock3
+                        size={16}
+                        color="#ff9500"
+                      />
+                    )}
+
+                    <Text 
+                      style={[
+                        styles.statusText,
+                        { color: isDelivered ? "#22c55e" : "#ff9500" }
+                      ]}
+                    >
+                      {item.status}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.priceText}>
+                    {currency}{item.totalPrice.toFixed(2)}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -222,5 +244,65 @@ const styles = StyleSheet.create({
   timeText: {
     color: "#888",
     fontWeight: "500",
+  },
+
+  orderHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  orderIdText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#999",
+  },
+
+  priceText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#000",
+  },
+
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 40,
+    marginTop: 80,
+  },
+  emptyEmoji: {
+    fontSize: 72,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#111",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 30,
+  },
+  browseButton: {
+    backgroundColor: "#111",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  browseButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

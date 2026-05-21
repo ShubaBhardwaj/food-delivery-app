@@ -17,50 +17,91 @@ import {
   Clock3,
   MapPin,
 } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useCart } from "../../context/CartContext";
 
-const cartItems = [
-  {
-    id: 1,
-    name: "Spicy Chicken Sandwich",
-    restaurant: "McDonald's",
-    price: 6.7,
-    quantity: 2,
-    image:
-      "https://images.unsplash.com/photo-1606755962773-d324e0a13086?q=80&w=1000",
-  },
-
-  {
-    id: 2,
-    name: "French Fries",
-    restaurant: "McDonald's",
-    price: 3.99,
-    quantity: 1,
-    image:
-      "https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=1000",
-  },
-
-  {
-    id: 3,
-    name: "Chocolate Shake",
-    restaurant: "Burger King",
-    price: 5.49,
-    quantity: 1,
-    image:
-      "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=1000",
-  },
-];
+const getFoodImage = (name: string) => {
+  const lowercaseName = name.toLowerCase();
+  if (lowercaseName.includes("pizza") || lowercaseName.includes("margherita") || lowercaseName.includes("flatbread")) {
+    return "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=400";
+  }
+  if (lowercaseName.includes("burger")) {
+    return "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=400";
+  }
+  if (lowercaseName.includes("sushi") || lowercaseName.includes("maki") || lowercaseName.includes("roll")) {
+    return "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=400";
+  }
+  if (lowercaseName.includes("noodle") || lowercaseName.includes("pasta") || lowercaseName.includes("alfredo") || lowercaseName.includes("penne") || lowercaseName.includes("spaghetti") || lowercaseName.includes("ravioli") || lowercaseName.includes("pesto")) {
+    return "https://images.unsplash.com/photo-1546549032-9571cd6b27df?q=80&w=400";
+  }
+  if (lowercaseName.includes("biryani") || lowercaseName.includes("rice") || lowercaseName.includes("dum")) {
+    return "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=400";
+  }
+  if (lowercaseName.includes("chicken") || lowercaseName.includes("kebab") || lowercaseName.includes("tikka") || lowercaseName.includes("mutton") || lowercaseName.includes("korma")) {
+    return "https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=400";
+  }
+  if (lowercaseName.includes("cake") || lowercaseName.includes("brownie") || lowercaseName.includes("dessert") || lowercaseName.includes("jamun") || lowercaseName.includes("tart")) {
+    return "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=400";
+  }
+  if (lowercaseName.includes("coffee") || lowercaseName.includes("shake") || lowercaseName.includes("mojito") || lowercaseName.includes("drink")) {
+    return "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=400";
+  }
+  if (lowercaseName.includes("paneer") || lowercaseName.includes("dal") || lowercaseName.includes("makhani") || lowercaseName.includes("nachos") || lowercaseName.includes("tacos")) {
+    return "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=400";
+  }
+  return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400";
+};
 
 export default function CartScreen() {
-  const subtotal = 22.88;
-  const delivery = 2.99;
-  const tax = 1.2;
-  const total = subtotal + delivery + tax;
+  const navigation = useNavigation<any>();
+  const { cartItems, updateQuantity, placeOrder, getCartSubtotal } = useCart();
+
+  const subtotal = getCartSubtotal();
+  const hasDollar = cartItems.some((i) => i.item.price.includes("$"));
+  const currencySymbol = hasDollar ? "$" : "₹";
+
+  const delivery = subtotal === 0 ? 0 : (subtotal > 200 ? 0 : (hasDollar ? 2.99 : 45));
+  const tax = subtotal === 0 ? 0 : (hasDollar ? 1.20 : 35);
+  const total = subtotal === 0 ? 0 : (subtotal + delivery + tax);
+
+  if (cartItems.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={24} color="#000" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>
+            My Cart
+          </Text>
+
+          <View style={{ width: 45 }} />
+        </View>
+
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyEmoji}>🛒</Text>
+          <Text style={styles.emptyText}>Your cart is empty</Text>
+          <Text style={styles.emptySubtext}>
+            Browse our catalog and add delicious items from your favorite restaurants!
+          </Text>
+          <TouchableOpacity 
+            style={styles.browseButton}
+            onPress={() => navigation.navigate("Home")}
+          >
+            <Text style={styles.browseButtonText}>Explore Restaurants</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ArrowLeft size={24} color="#000" />
         </TouchableOpacity>
 
@@ -74,7 +115,7 @@ export default function CartScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 220,
+          paddingBottom: 240,
         }}
       >
         {/* DELIVERY INFO */}
@@ -120,65 +161,71 @@ export default function CartScreen() {
             Order Items
           </Text>
 
-          {cartItems.map((item) => (
-            <View
-              key={item.id}
-              style={styles.cartItem}
-            >
-              <Image
-                source={{ uri: item.image }}
-                style={styles.foodImage}
-              />
+          {cartItems.map((cartItem, index) => {
+            const { restaurant, item, quantity } = cartItem;
+            const itemKey = `${restaurant.id}-${item.name}-${index}`;
+            return (
+              <View
+                key={itemKey}
+                style={styles.cartItem}
+              >
+                <Image
+                  source={{ uri: getFoodImage(item.name) }}
+                  style={styles.foodImage}
+                />
 
-              <View style={styles.foodDetails}>
-                <Text style={styles.foodName}>
-                  {item.name}
-                </Text>
+                <View style={styles.foodDetails}>
+                  <Text style={styles.foodName}>
+                    {item.name}
+                  </Text>
 
-                <Text style={styles.restaurantName}>
-                  {item.restaurant}
-                </Text>
+                  <Text style={styles.restaurantName}>
+                    {restaurant.name}
+                  </Text>
 
-                <Text style={styles.foodPrice}>
-                  ${item.price}
-                </Text>
+                  <Text style={styles.foodPrice}>
+                    {item.price}
+                  </Text>
+                </View>
+
+                {/* QUANTITY */}
+                <View style={styles.quantityContainer}>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(restaurant.id, item.name, -1)}
+                  >
+                    <Minus size={18} color="#000" />
+                  </TouchableOpacity>
+
+                  <Text style={styles.quantityText}>
+                    {quantity}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.quantityButton,
+                      styles.plusButton,
+                    ]}
+                    onPress={() => updateQuantity(restaurant.id, item.name, 1)}
+                  >
+                    <Plus size={18} color="#fff" />
+                  </TouchableOpacity>
+                </View>
               </View>
-
-              {/* QUANTITY */}
-              <View style={styles.quantityContainer}>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                >
-                  <Minus size={18} color="#000" />
-                </TouchableOpacity>
-
-                <Text style={styles.quantityText}>
-                  {item.quantity}
-                </Text>
-
-                <TouchableOpacity
-                  style={[
-                    styles.quantityButton,
-                    styles.plusButton,
-                  ]}
-                >
-                  <Plus size={18} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* PROMO CARD */}
         <View style={styles.promoCard}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.promoTitle}>
               Free Delivery 🎉
             </Text>
 
             <Text style={styles.promoText}>
               You unlocked free delivery on
-              orders above $20
+              orders above {currencySymbol}{hasDollar ? "20" : "200"}
             </Text>
           </View>
 
@@ -198,7 +245,7 @@ export default function CartScreen() {
           </Text>
 
           <Text style={styles.priceValue}>
-            ${subtotal.toFixed(2)}
+            {currencySymbol}{subtotal.toFixed(2)}
           </Text>
         </View>
 
@@ -208,7 +255,7 @@ export default function CartScreen() {
           </Text>
 
           <Text style={styles.priceValue}>
-            ${delivery.toFixed(2)}
+            {delivery === 0 ? "Free" : `${currencySymbol}${delivery.toFixed(2)}`}
           </Text>
         </View>
 
@@ -218,7 +265,7 @@ export default function CartScreen() {
           </Text>
 
           <Text style={styles.priceValue}>
-            ${tax.toFixed(2)}
+            {currencySymbol}{tax.toFixed(2)}
           </Text>
         </View>
 
@@ -230,11 +277,17 @@ export default function CartScreen() {
           </Text>
 
           <Text style={styles.totalValue}>
-            ${total.toFixed(2)}
+            {currencySymbol}{total.toFixed(2)}
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.checkoutButton}>
+        <TouchableOpacity 
+          style={styles.checkoutButton}
+          onPress={() => {
+            placeOrder();
+            navigation.navigate("order");
+          }}
+        >
           <Text style={styles.checkoutButtonText}>
             Proceed to Checkout
           </Text>
@@ -520,6 +573,48 @@ const styles = StyleSheet.create({
   checkoutButtonText: {
     color: "#fff",
     fontSize: 17,
+    fontWeight: "700",
+  },
+
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 40,
+    paddingBottom: 80,
+  },
+  emptyEmoji: {
+    fontSize: 72,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#111",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 30,
+  },
+  browseButton: {
+    backgroundColor: "#111",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  browseButtonText: {
+    color: "#fff",
+    fontSize: 16,
     fontWeight: "700",
   },
 });

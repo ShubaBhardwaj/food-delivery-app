@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useCart } from "../../context/CartContext";
 
 import {
   ArrowLeft,
@@ -62,8 +63,9 @@ const getFoodImage = (name: string) => {
 };
 
 export default function RestaurantScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { addToCart } = useCart();
 
   // Fetch passed restaurant or fallback to first one in dataset
   const restaurant = route.params?.restaurant || restaurants[0];
@@ -78,6 +80,7 @@ export default function RestaurantScreen() {
           name: item.name,
           price: item.price,
           image: getFoodImage(item.name),
+          originalItem: item,
         });
       });
     });
@@ -261,6 +264,10 @@ export default function RestaurantScreen() {
                       styles.foodCard,
                       { transform: [{ scale: pressed ? 0.96 : 1 }] }
                     ]}
+                    onPress={() => {
+                      addToCart(restaurant, item.originalItem);
+                      navigation.navigate("Cart");
+                    }}
                   >
                     <View style={styles.imageWrapper}>
                       <Image
@@ -282,6 +289,10 @@ export default function RestaurantScreen() {
                             styles.addButton,
                             { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] }
                           ]}
+                          onPress={() => {
+                            addToCart(restaurant, item.originalItem);
+                            navigation.navigate("Cart");
+                          }}
                         >
                           <Plus size={20} color="#fff" strokeWidth={3} />
                         </Pressable>
@@ -332,6 +343,10 @@ export default function RestaurantScreen() {
                           styles.inlineAddButton,
                           { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] }
                         ]}
+                        onPress={() => {
+                          addToCart(restaurant, item);
+                          navigation.navigate("Cart");
+                        }}
                       >
                         <Text style={styles.inlineAddText}>ADD</Text>
                       </Pressable>
