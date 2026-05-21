@@ -25,11 +25,17 @@ import {
   Heart,
   Settings,
   LogOut,
+  Menu,
 } from "lucide-react-native";
 import { useNavigation } from '@react-navigation/native';
 
-const ProfileDrawer = () => {
-  const navigation = useNavigation();
+interface ProfileDrawerProps {
+  openDrawer?: () => void;
+  navigateTo?: (screen: string) => void;
+}
+
+const ProfileDrawer = ({ openDrawer, navigateTo }: ProfileDrawerProps) => {
+  const navigation = useNavigation<any>();
   const [isVegOnly, setIsVegOnly] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -43,10 +49,13 @@ const ProfileDrawer = () => {
         }}
       >
         {/* TOP BAR */}
-        <View style={styles.topBar}>
-          <View />
-
-
+        {/* <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={openDrawer}
+          >
+            <Menu size={22} color="#000" />
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.notificationButton}
@@ -55,7 +64,7 @@ const ProfileDrawer = () => {
 
             <View style={styles.redDot} />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* PROFILE */}
         <View style={styles.profileSection}>
@@ -296,6 +305,7 @@ const ProfileDrawer = () => {
           {/* ORDERS */}
           <TouchableOpacity
             style={styles.row}
+            onPress={() => navigateTo && navigateTo('My Order')}
           >
             <View style={styles.leftSection}>
               <View style={styles.iconBox}>
@@ -358,6 +368,7 @@ const ProfileDrawer = () => {
           {/* SETTINGS */}
           <TouchableOpacity
             style={styles.row}
+            onPress={() => navigateTo && navigateTo('Setting')}
           >
             <View style={styles.leftSection}>
               <View style={styles.iconBox}>
@@ -389,6 +400,7 @@ const ProfileDrawer = () => {
           {/* LOGOUT */}
           <TouchableOpacity
             style={styles.row}
+            onPress={() => navigateTo && navigateTo('Logout')}
           >
             <View style={styles.leftSection}>
               <View
