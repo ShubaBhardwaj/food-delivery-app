@@ -76,28 +76,28 @@ graph TD
     AuthGuard -- No --> Landing[Landing Screen / Let's Explore]
     Landing --> Register[Register Screen]
     Register --> Login[Login Screen]
-    Login --> MainDrawer[Primary Custom Drawer]
+    Login -- "Logs In (Triggers Auth Session)" --> TabNavigator
 
-    %% Main App Structure
-    AuthGuard -- Yes --> MainDrawer
-    
-    %% Drawer Registry
-    MainDrawer --> TabBar[Custom Floating Tab Navigator]
-    MainDrawer --> DrawerMyOrder[My Feast Hub Screen]
-    MainDrawer --> DrawerSettings[Settings Preferences]
-    MainDrawer --> DrawerHelp[Help & FAQ Accordion]
-    MainDrawer --> DrawerLogout[Sleek Logout confirmation]
+    %% Main App Tab Navigator
+    AuthGuard -- Yes --> TabNavigator[Custom Floating Tab Navigator]
     
     %% Bottom Tab Registry
-    TabBar --> TabHomeStack[Home Stack]
-    TabBar --> TabSearch[Search Screen]
-    TabBar --> TabOrders[Active Orders Screen]
-    TabBar --> TabProfile[Profile Settings Screen]
+    TabNavigator --> TabHomeStack[Home Tab Stack]
+    TabNavigator --> TabSearch[Search Tab Screen]
+    TabNavigator --> TabOrders[Orders Tab Screen]
+    TabNavigator --> TabProfileDrawer[Profile Tab Drawer]
 
     %% Home Stack Detail Screens
-    TabHomeStack --> ScreenHome[Home Categories & Feed]
+    TabHomeStack --> ScreenHome[Home Screen Feed]
     TabHomeStack --> ScreenRest[Restaurant Detail & Menu]
     TabHomeStack --> ScreenCart[My Cart & Checkout Screen]
+
+    %% Profile Drawer Screen Registry
+    TabProfileDrawer --> DrawerProfile[Profile Drawer Screen]
+    TabProfileDrawer --> DrawerMyOrder[My Feast Hub Drawer Screen]
+    TabProfileDrawer --> DrawerSettings[Settings Drawer Screen]
+    TabProfileDrawer --> DrawerHelp[Help & FAQ Drawer Screen]
+    TabProfileDrawer --> DrawerLogout[Logout Drawer Screen]
 ```
 
 ### Navigation Highlights
