@@ -8,7 +8,7 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -23,34 +23,66 @@ import {
   DollarSign
 } from "lucide-react-native";
 
+import { restaurants } from "../../data/restaurants";
+
 const { width } = Dimensions.get('window');
 
-const popularItems = [
-  {
-    id: 1,
-    name: "2 Sausage Burrito Meal",
-    price: "$8.49",
-    image:
-      "https://images.unsplash.com/photo-1525385133512-2f3bdd039054?q=80&w=1000",
-  },
-  {
-    id: 2,
-    name: "Spicy Chicken Sandwich",
-    price: "$6.70",
-    image:
-      "https://images.unsplash.com/photo-1606755962773-d324e0a13086?q=80&w=1000",
-  },
-  {
-    id: 3,
-    name: "8 pc. Chicken Nuggets",
-    price: "$21.95",
-    image:
-      "https://images.unsplash.com/photo-1562967914-608f82629710?q=80&w=1000",
-  },
-];
+// Beautiful food matching helper based on item names
+const getFoodImage = (name: string) => {
+  const lowercaseName = name.toLowerCase();
+  if (lowercaseName.includes("pizza") || lowercaseName.includes("margherita") || lowercaseName.includes("flatbread")) {
+    return "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=600";
+  }
+  if (lowercaseName.includes("burger")) {
+    return "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=600";
+  }
+  if (lowercaseName.includes("sushi") || lowercaseName.includes("maki") || lowercaseName.includes("roll")) {
+    return "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=600";
+  }
+  if (lowercaseName.includes("noodle") || lowercaseName.includes("pasta") || lowercaseName.includes("alfredo") || lowercaseName.includes("penne") || lowercaseName.includes("spaghetti") || lowercaseName.includes("ravioli") || lowercaseName.includes("pesto")) {
+    return "https://images.unsplash.com/photo-1546549032-9571cd6b27df?q=80&w=600";
+  }
+  if (lowercaseName.includes("biryani") || lowercaseName.includes("rice") || lowercaseName.includes("dum")) {
+    return "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=600";
+  }
+  if (lowercaseName.includes("chicken") || lowercaseName.includes("kebab") || lowercaseName.includes("tikka") || lowercaseName.includes("mutton") || lowercaseName.includes("korma") || lowercaseName.includes("boti") || lowercaseName.includes("seekh") || lowercaseName.includes("rogan")) {
+    return "https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=600";
+  }
+  if (lowercaseName.includes("cake") || lowercaseName.includes("brownie") || lowercaseName.includes("dessert") || lowercaseName.includes("jamun") || lowercaseName.includes("tart") || lowercaseName.includes("macarons") || lowercaseName.includes("eclair") || lowercaseName.includes("phirni") || lowercaseName.includes("kulfi")) {
+    return "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=600";
+  }
+  if (lowercaseName.includes("coffee") || lowercaseName.includes("shake") || lowercaseName.includes("mojito") || lowercaseName.includes("drink") || lowercaseName.includes("beverage") || lowercaseName.includes("lassi") || lowercaseName.includes("frappe") || lowercaseName.includes("brew")) {
+    return "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=600";
+  }
+  if (lowercaseName.includes("paneer") || lowercaseName.includes("dal") || lowercaseName.includes("makhani") || lowercaseName.includes("nachos") || lowercaseName.includes("tacos") || lowercaseName.includes("quesadilla") || lowercaseName.includes("hummus") || lowercaseName.includes("falafel") || lowercaseName.includes("appam")) {
+    return "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600";
+  }
+  // Generic fallback
+  return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=600";
+};
 
 export default function RestaurantScreen() {
   const navigation = useNavigation();
+  const route = useRoute<any>();
+
+  // Fetch passed restaurant or fallback to first one in dataset
+  const restaurant = route.params?.restaurant || restaurants[0];
+
+  // Derive top 4 popular signature dishes from their actual menu
+  const popularItems = React.useMemo(() => {
+    const list: any[] = [];
+    restaurant.menu.forEach((categoryBlock: any) => {
+      categoryBlock.items.forEach((item: any) => {
+        list.push({
+          id: `${restaurant.id}-${item.name}`,
+          name: item.name,
+          price: item.price,
+          image: getFoodImage(item.name),
+        });
+      });
+    });
+    return list.slice(0, 4);
+  }, [restaurant]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -59,17 +91,15 @@ export default function RestaurantScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
         bounces={false}
       >
-        {/* TOP IMAGE */}
+        {/* TOP COVER IMAGE */}
         <View style={styles.imageContainer}>
           <Image
-            source={{
-              uri: "https://images.unsplash.com/photo-1550317138-10000687a72b?q=80&w=1200",
-            }}
+            source={{ uri: restaurant.image }}
             style={styles.coverImage}
           />
           <View style={styles.imageOverlay} />
 
-          {/* TOP BUTTONS */}
+          {/* FLOATING ACTION BUTTONS */}
           <View style={styles.topButtonsContainer}>
             <View style={styles.topButtons}>
               <Pressable 
@@ -89,7 +119,7 @@ export default function RestaurantScreen() {
                     { opacity: pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] }
                   ]}
                 >
-                  <Heart size={22} color="#000" />
+                  <Heart size={22} color="#ef4444" fill="#ef4444" />
                 </Pressable>
 
                 <Pressable 
@@ -104,24 +134,21 @@ export default function RestaurantScreen() {
             </View>
           </View>
 
-          {/* FLOATING LOGO */}
+          {/* FLOATING TEXT LOGO AVATAR */}
           <View style={styles.logoWrapper}>
-            <Image
-              source={{
-                uri: "https://upload.wikimedia.org/wikipedia/commons/4/4e/McDonald%27s_Golden_Arches.svg",
-              }}
-              style={styles.logo}
-            />
+            <Text style={styles.logoLetter}>
+              {restaurant.name.charAt(0)}
+            </Text>
           </View>
         </View>
 
-        {/* CONTENT */}
+        {/* RESTAURANT INFO BLOCK */}
         <View style={styles.content}>
-          {/* TITLE */}
+          {/* RESTAURANT DETAILS */}
           <View style={styles.titleRow}>
-            <View>
-              <Text style={styles.restaurantName}>McDonald’s</Text>
-              <Text style={styles.tagsText}>American • Fast Food • Burgers</Text>
+            <View style={{ flex: 1, paddingRight: 8 }}>
+              <Text style={styles.restaurantName}>{restaurant.name}</Text>
+              <Text style={styles.tagsText}>{restaurant.cuisine.join(" • ")}</Text>
             </View>
 
             <Pressable 
@@ -134,135 +161,187 @@ export default function RestaurantScreen() {
             </Pressable>
           </View>
 
-          {/* RATINGS & LOCATION PILLS */}
+          {/* BADGES & LOCATION */}
           <View style={styles.pillsRow}>
             <View style={styles.ratingPill}>
               <Star size={16} color="#d97706" fill="#d97706" />
-              <Text style={styles.ratingText}>4.8</Text>
-              <Text style={styles.ratingCount}>(2.7k+)</Text>
+              <Text style={styles.ratingText}>{restaurant.rating}</Text>
+              <Text style={styles.ratingCount}>({restaurant.reviews})</Text>
             </View>
 
             <View style={styles.locationPill}>
               <MapPin size={16} color="#4b5563" />
-              <Text style={styles.locationText}>3455 West Peoria Ave</Text>
+              <Text style={styles.locationText} numberOfLines={1}>{restaurant.location}</Text>
             </View>
           </View>
 
-          {/* DELIVERY INFO */}
+          {/* DELIVERY & COST SUMMARY */}
           <View style={styles.deliveryContainer}>
-            <Pressable 
-              style={({ pressed }) => [
-                styles.deliveryBox,
-                { transform: [{ scale: pressed ? 0.98 : 1 }] }
-              ]}
-            >
+            <View style={styles.deliveryBox}>
               <View style={styles.iconCircle}>
                 <Clock3 size={20} color="#000" />
               </View>
               <View>
-                <Text style={styles.deliveryTime}>30-40 min</Text>
-                <Text style={styles.deliveryLabel}>Delivery time</Text>
+                <Text style={styles.deliveryTime}>{restaurant.deliveryTime}</Text>
+                <Text style={styles.deliveryLabel}>Delivery speed</Text>
               </View>
-            </Pressable>
+            </View>
 
-            <Pressable 
-              style={({ pressed }) => [
-                styles.deliveryBox,
-                { transform: [{ scale: pressed ? 0.98 : 1 }] }
-              ]}
-            >
+            <View style={styles.deliveryBox}>
               <View style={[styles.iconCircle, { backgroundColor: '#f0fdf4' }]}>
                 <DollarSign size={20} color="#16a34a" />
               </View>
               <View>
-                <Text style={styles.deliveryTime}>$0.00</Text>
-                <Text style={styles.deliveryLabel}>Delivery fee ($12+)</Text>
+                <Text style={styles.deliveryTime}>{restaurant.deliveryFee === "Free" ? "Free" : restaurant.deliveryFee}</Text>
+                <Text style={styles.deliveryLabel}>Delivery fee</Text>
               </View>
-            </Pressable>
+            </View>
           </View>
 
-          {/* OFFER CARD */}
-          <View style={styles.offerCardShadow}>
-            <Pressable 
-              style={({ pressed }) => [
-                styles.offerCardInner,
-                { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }
-              ]}
-            >
-              <Image
-                source={{
-                  uri: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1000",
-                }}
-                style={styles.offerImage}
-              />
-              <View style={styles.offerGradient} />
-              
-              <View style={{ flex: 1, padding: 24 }}>
-                <View style={styles.offerTag}>
-                  <Text style={styles.offerTagText}>LIMITED TIME</Text>
-                </View>
-                <Text style={styles.offerTitle}>Deals for Days</Text>
-                <Text style={styles.offerSubtitle}>
-                  Get $0 delivery fee on your first order over $10!
-                </Text>
-                <View style={styles.learnButton}>
-                  <Text style={styles.learnButtonText}>Claim Offer</Text>
-                </View>
-              </View>
-            </Pressable>
+          {/* MINIMUM ORDER / PRICE FOR TWO PILL */}
+          <View style={styles.extraPillsRow}>
+            <View style={styles.costBadge}>
+              <Text style={styles.extraBadgeText}>Cost for Two: {restaurant.priceForTwo}</Text>
+            </View>
+            <View style={styles.orderBadge}>
+              <Text style={styles.extraBadgeText}>Min Order: {restaurant.minOrder}</Text>
+            </View>
           </View>
 
-          {/* POPULAR ITEMS */}
-          <View style={styles.popularSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Popular Items</Text>
-              <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
-                <Text style={styles.seeAllText}>See All</Text>
+          {/* PROMOTIONAL OFFER BOX */}
+          {restaurant.offer && (
+            <View style={styles.offerCardShadow}>
+              <Pressable 
+                style={({ pressed }) => [
+                  styles.offerCardInner,
+                  { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }
+                ]}
+              >
+                <Image
+                  source={{ uri: restaurant.image }}
+                  style={styles.offerImage}
+                />
+                <View style={styles.offerGradient} />
+                
+                <View style={{ flex: 1, padding: 24, zIndex: 2 }}>
+                  <View style={styles.offerTag}>
+                    <Text style={styles.offerTagText}>OFFER ACTIVE</Text>
+                  </View>
+                  <Text style={styles.offerTitle}>{restaurant.offer}</Text>
+                  <Text style={styles.offerSubtitle}>
+                    Order now to redeem this exclusive discount at {restaurant.name}!
+                  </Text>
+                  <View style={styles.learnButton}>
+                    <Text style={styles.learnButtonText}>Claim Now</Text>
+                  </View>
+                </View>
               </Pressable>
             </View>
+          )}
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingRight: 20 }}
-            >
-              {popularItems.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={({ pressed }) => [
-                    styles.foodCard,
-                    { transform: [{ scale: pressed ? 0.96 : 1 }] }
-                  ]}
-                >
-                  <View style={styles.imageWrapper}>
-                    <Image
-                      source={{ uri: item.image }}
-                      style={styles.foodImage}
-                    />
-                  </View>
+          {/* SIGNATURE ITEMS HORIZONTAL SLIDER */}
+          {popularItems.length > 0 && (
+            <View style={styles.popularSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Signature Items</Text>
+                <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}>
+                  <Text style={styles.seeAllText}>Scroll Right →</Text>
+                </Pressable>
+              </View>
 
-                  <View style={styles.foodInfo}>
-                    <Text style={styles.foodName} numberOfLines={2}>
-                      {item.name}
-                    </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 20 }}
+              >
+                {popularItems.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={({ pressed }) => [
+                      styles.foodCard,
+                      { transform: [{ scale: pressed ? 0.96 : 1 }] }
+                    ]}
+                  >
+                    <View style={styles.imageWrapper}>
+                      <Image
+                        source={{ uri: item.image }}
+                        style={styles.foodImage}
+                      />
+                    </View>
 
-                    <View style={styles.foodBottomRow}>
-                      <Text style={styles.foodPrice}>{item.price}</Text>
+                    <View style={styles.foodInfo}>
+                      <Text style={styles.foodName} numberOfLines={2}>
+                        {item.name}
+                      </Text>
 
+                      <View style={styles.foodBottomRow}>
+                        <Text style={styles.foodPrice}>{item.price}</Text>
+
+                        <Pressable 
+                          style={({ pressed }) => [
+                            styles.addButton,
+                            { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] }
+                          ]}
+                        >
+                          <Plus size={20} color="#fff" strokeWidth={3} />
+                        </Pressable>
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* FULL CATEGORIZED MENU ITEMS */}
+          <View style={styles.menuSection}>
+            <Text style={styles.mainMenuHeader}>Browse Menu</Text>
+            
+            {restaurant.menu.map((categoryObj: any, idx: number) => (
+              <View key={idx} style={styles.categoryBlock}>
+                <Text style={styles.categoryHeader}>
+                  {categoryObj.category} ({categoryObj.items.length})
+                </Text>
+                <View style={styles.menuDivider} />
+
+                {categoryObj.items.map((item: any, itemIdx: number) => (
+                  <View key={itemIdx} style={styles.menuItemRow}>
+                    <View style={styles.menuItemDetails}>
+                      
+                      {/* VEG/NON-VEG BADGE */}
+                      <View style={[styles.vegBadge, { borderColor: item.veg ? '#10b981' : '#ef4444' }]}>
+                        <View style={[styles.vegDot, { backgroundColor: item.veg ? '#10b981' : '#ef4444' }]} />
+                      </View>
+                      
+                      <Text style={styles.menuItemName}>{item.name}</Text>
+                      <Text style={styles.menuItemPrice}>{item.price}</Text>
+                      
+                      {item.description ? (
+                        <Text style={styles.menuItemDescription}>{item.description}</Text>
+                      ) : null}
+                    </View>
+
+                    {/* MENU ITEM IMAGE WITH OVERLAY ADD BUTTON */}
+                    <View style={styles.itemActionContainer}>
+                      <Image
+                        source={{ uri: getFoodImage(item.name) }}
+                        style={styles.menuItemImage}
+                      />
                       <Pressable 
                         style={({ pressed }) => [
-                          styles.addButton,
-                          { opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.9 : 1 }] }
+                          styles.inlineAddButton,
+                          { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] }
                         ]}
                       >
-                        <Plus size={20} color="#fff" strokeWidth={3} />
+                        <Text style={styles.inlineAddText}>ADD</Text>
                       </Pressable>
                     </View>
                   </View>
-                </Pressable>
-              ))}
-            </ScrollView>
+                ))}
+              </View>
+            ))}
           </View>
+
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -285,7 +364,7 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   topButtonsContainer: {
     position: "absolute",
@@ -307,7 +386,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    backgroundColor: "rgba(255,255,255,0.9)",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -323,19 +402,19 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#fff",
+    backgroundColor: "#111827",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 15,
     elevation: 6,
   },
-  logo: {
-    width: 50,
-    height: 50,
-    resizeMode: "contain",
+  logoLetter: {
+    color: '#ffffff',
+    fontSize: 32,
+    fontWeight: '900',
   },
   content: {
     paddingTop: 50,
@@ -348,22 +427,23 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   restaurantName: {
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: "800",
-    color: "#000",
-    letterSpacing: -1,
+    color: "#111827",
+    letterSpacing: -0.5,
   },
   tagsText: {
     fontSize: 14,
-    color: "#666",
-    marginTop: 4,
+    color: "#6b7280",
+    marginTop: 6,
     fontWeight: "500",
+    lineHeight: 20,
   },
   infoButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#f4f4f5",
+    backgroundColor: "#f3f4f6",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -401,6 +481,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
+    flex: 1,
+    minWidth: 150,
   },
   locationText: {
     marginLeft: 6,
@@ -449,11 +531,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
+  extraPillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 15,
+  },
+  costBadge: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  orderBadge: {
+    backgroundColor: '#f5f5f7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  extraBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+  },
   offerCardShadow: {
     marginTop: 30,
     shadowColor: "#ef4444",
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 20,
     elevation: 8,
     borderRadius: 28,
@@ -467,7 +572,7 @@ const styles = StyleSheet.create({
   },
   offerGradient: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0)',
+    backgroundColor: 'rgba(255,241,242,0.4)',
     zIndex: 1,
   },
   offerTag: {
@@ -485,7 +590,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   offerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "900",
     color: "#881337",
     letterSpacing: -0.5,
@@ -493,8 +598,8 @@ const styles = StyleSheet.create({
   offerSubtitle: {
     marginTop: 8,
     color: "#be123c",
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     maxWidth: "90%",
   },
   learnButton: {
@@ -519,10 +624,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: -40,
     bottom: -30,
-    width: 220,
-    height: 220,
+    width: 200,
+    height: 200,
     resizeMode: "cover",
     zIndex: 0,
+    opacity: 0.85,
   },
   popularSection: {
     marginTop: 35,
@@ -534,7 +640,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
     color: "#000",
     letterSpacing: -0.5,
@@ -542,7 +648,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     color: "#ef4444",
     fontWeight: "700",
-    fontSize: 15,
+    fontSize: 14,
     marginBottom: 3,
   },
   foodCard: {
@@ -553,7 +659,7 @@ const styles = StyleSheet.create({
     padding: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 15,
     elevation: 6,
     borderWidth: 1,
@@ -574,11 +680,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   foodName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: "#111",
-    lineHeight: 24,
-    height: 48,
+    lineHeight: 22,
+    height: 44,
   },
   foodBottomRow: {
     marginTop: 12,
@@ -587,7 +693,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   foodPrice: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800",
     color: "#000",
   },
@@ -603,5 +709,105 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
+  },
+  mainMenuHeader: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.5,
+    marginBottom: 20,
+  },
+  menuSection: {
+    marginTop: 40,
+    paddingBottom: 40,
+  },
+  categoryBlock: {
+    marginBottom: 35,
+  },
+  categoryHeader: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1f2937",
+    letterSpacing: -0.3,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#f3f4f6',
+    marginVertical: 12,
+  },
+  menuItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f9fafb',
+  },
+  menuItemDetails: {
+    flex: 1,
+    paddingRight: 20,
+  },
+  vegBadge: {
+    width: 14,
+    height: 14,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderRadius: 2,
+  },
+  vegDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  menuItemName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  menuItemPrice: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111827',
+    marginTop: 4,
+  },
+  menuItemDescription: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 6,
+    lineHeight: 18,
+  },
+  itemActionContainer: {
+    position: 'relative',
+    width: 100,
+    height: 105,
+    alignItems: 'center',
+  },
+  menuItemImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 16,
+  },
+  inlineAddButton: {
+    position: 'absolute',
+    bottom: 0,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#10b981',
+    paddingHorizontal: 22,
+    paddingVertical: 6,
+    borderRadius: 8,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  inlineAddText: {
+    color: '#10b981',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });

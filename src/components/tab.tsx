@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useState } from 'react';
 import {
   View,
   Text,
@@ -19,6 +18,7 @@ import HomeStackNavigator from '../tab/home';
 import SearchScreen from '../tab/search';
 import OrderScreen from '../tab/order';
 import ProfileScreen from '../tab/profile';
+import { useCart } from '../context/CartContext';
 
 const { width } = Dimensions.get('window');
 
@@ -30,16 +30,16 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const Tab = createBottomTabNavigator();
 
-// ─── Your pill design lives here ──────────────────────────────────────────────
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+    const { getOngoingOrdersCount } = useCart();
+    const ongoingCount = getOngoingOrdersCount();
 
-    const [activeTab, setActiveTab] = useState('home');
+    // Determine currently active route dynamically from navigation state
+    const activeTab = state.routes[state.index].name;
 
     const handleTabPress = (tabName: string, routeKey: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setActiveTab(tabName);
 
-        // Tell React Navigation to actually switch the screen
         const event = navigation.emit({
             type: 'tabPress',
             target: routeKey,
@@ -72,12 +72,19 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                             onPress={() => handleTabPress(tab.name, route?.key ?? tab.name)}
                             activeOpacity={0.7}
                         >
-                            <Icon
-                                size={24}
-                                color={isActive ? '#000' : '#999'}
-                                fill={isActive && tab.name !== 'search' ? '#000' : 'transparent'}
-                                strokeWidth={isActive ? 2.5 : 2}
-                            />
+                            <View style={styles.iconContainer}>
+                                <Icon
+                                    size={24}
+                                    color={isActive ? '#000' : '#999'}
+                                    fill={isActive && tab.name !== 'search' ? '#000' : 'transparent'}
+                                    strokeWidth={isActive ? 2.5 : 2}
+                                />
+                                {tab.name === 'order' && ongoingCount > 0 && (
+                                    <View style={styles.badgeContainer}>
+                                        <Text style={styles.badgeText}>{ongoingCount}</Text>
+                                    </View>
+                                )}
+                            </View>
                             {isActive && (
                                 <Text style={styles.activeTabText}>{tab.label}</Text>
                             )}
@@ -88,7 +95,6 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         </View>
     );
 }
-// ──────────────────────────────────────────────────────────────────────────────
 
 export default function TabNavigator() {
     return (
@@ -104,7 +110,6 @@ export default function TabNavigator() {
         </Tab.Navigator>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -148,5 +153,29 @@ const styles = StyleSheet.create({
         color: '#000',
         fontSize: 14,
         fontWeight: '700',
+    },
+    iconContainer: {
+        position: 'relative',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    badgeContainer: {
+        position: 'absolute',
+        top: -6,
+        right: -8,
+        backgroundColor: '#ef4444',
+        minWidth: 16,
+        height: 16,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+        borderWidth: 1.5,
+        borderColor: '#ffffff',
+    },
+    badgeText: {
+        color: '#ffffff',
+        fontSize: 9,
+        fontWeight: '900',
     },
 });

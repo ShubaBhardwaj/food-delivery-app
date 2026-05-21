@@ -3,16 +3,19 @@ import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import TabNavigator from './src/components/tab';
+import { CartProvider } from './src/context/CartContext';
 
 export default function App() {
   return (
     <GestureHandlerRootView style={styles.gestureRoot}>
-      <NavigationContainer>
-        <View style={styles.container}>
-          <TabNavigator />
-          <StatusBar style="dark" />
-        </View>
-      </NavigationContainer>
+      <CartProvider>
+        <NavigationContainer>
+          <View style={styles.container}>
+            <TabNavigator />
+            <StatusBar style="dark" />
+          </View>
+        </NavigationContainer>
+      </CartProvider>
     </GestureHandlerRootView>
   );
 }
